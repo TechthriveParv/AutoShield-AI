@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Engine Forecast · AutoShield AI{% endblock %}
+{% block crumb %}Engine forecast{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">PREDICTIVE VEHICLE INTELLIGENCE</p><h1>Engine health forecast</h1><p class="muted">Look up a fictional local sample vehicle and explore two ML predictions.</p></div></div>
+<div class="notice"><b>Demo-data warning:</b> This model is trained on synthetic examples generated for this project. Risk and remaining-life numbers are demonstrations, not dependable predictions for a real car. Do not use them to make safety decisions.</div>
+<div class="panel"><h2>Vehicle lookup</h2><form method="post" class="form-grid">
+<label>Registration number<input name="plate" required value="{{ plate }}" placeholder="MH02AB1234"></label>
+<label>Current odometer (km)<input name="odometer_km" type="number" min="0" value="85000" required></label>
+<label>Services in last 5 years<input name="services_last_5y" type="number" min="0" max="50" value="5" required></label>
+<label>Engine fault codes<input name="engine_fault_codes" type="number" min="0" max="30" value="0" required></label>
+<label>Harsh-driving events (reported)<input name="harsh_driving_events" type="number" min="0" max="30" value="1" required></label>
+<label>Expected annual travel (km)<input name="annual_km" type="number" min="1" value="12000" required></label>
+<div><button class="btn primary" type="submit">Look up and predict</button></div></form>
+<p class="muted small">Sample registrations: {% for car in cars %}<code>{{car.plate}}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p></div>
+{% if result %}<div class="panel"><h2>Vehicle profile</h2><div class="stats-grid"><div class="stat"><span>Make / model</span><strong>{{result.car.make}} {{result.car.model}}</strong></div><div class="stat"><span>Colour</span><strong>{{result.car.color or 'Not recorded'}}</strong></div><div class="stat"><span>Year / fuel</span><strong>{{result.car.year}} · {{result.car.fuel}}</strong></div><div class="stat"><span>Engine capacity</span><strong>Not recorded</strong></div></div></div>
+<div class="stats-grid"><div class="stat"><span>Maintenance risk (demo)</span><strong>{{result.risk}}</strong></div><div class="stat"><span>Estimated remaining life (demo)</span><strong>{{'{:,}'.format(result.remaining)}} km</strong></div><div class="stat"><span>Years at your usage (rough demo)</span><strong>{{result.years}} years</strong></div></div>
+{% endif %}
+<div class="panel"><h2>Model diagnostics</h2><div class="stats-grid"><div class="stat"><span>Synthetic training rows</span><strong>{{metrics.rows}}</strong></div><div class="stat"><span>Risk classifier test accuracy</span><strong>{{'%.1f'|format(metrics.risk_accuracy*100)}}%</strong></div><div class="stat"><span>Life regression test MAE</span><strong>{{'{:,.0f}'.format(metrics.life_mae_km)}} km</strong></div></div><p class="muted small">Metrics measure fit to generated synthetic labels only. They do not measure real-world engine prediction accuracy.</p><h3>Risk model feature importance</h3><ul>{% for name, score in metrics.feature_importances %}<li>{{name.replace('_',' ')}} — {{'%.1f'|format(score*100)}}%</li>{% endfor %}</ul></div>
+{% endblock %}

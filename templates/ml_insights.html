@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block crumb %}ML insights{% endblock %}
+{% block content %}
+<div class="heading"><small class="eyebrow">SUPERVISED MACHINE LEARNING</small><h1>ML insights<span>.</span></h1><p>Random Forest classification of vehicle-record patterns using a locally trained model.</p></div>
+<div class="notice warning"><b>!</b><div><strong>Prototype, not a legal or safety judgement</strong><p>Categories describe record patterns only. They are not proof of offences, driver behaviour, or vehicle risk. The included CSV is synthetic demonstration data; replace it with reviewed, labelled records before presenting results as real-world findings.</p></div></div>
+{% if error %}<section class="panel"><h2>Model could not train</h2><p>{{error}}</p><p>Install dependencies with <code>python -m pip install -r requirements.txt</code>, then check <code>data/traffic_patterns.csv</code>.</p></section>
+{% elif result %}
+<div class="stats">
+<article><small>ALGORITHM</small><strong style="font-size:20px">Random Forest</strong><em>200 decision trees</em></article>
+<article><small>LABELLED ROWS</small><strong>{{result.rows}}</strong><em>From CSV training dataset</em></article>
+<article><small>HOLDOUT ACCURACY</small><strong>{{"%.1f"|format(result.accuracy*100)}}%</strong><em>{{result.test_rows}} test rows · current dataset only</em></article>
+<article><small>VEHICLES ANALYSED</small><strong>{{predictions|length}}</strong><em>Local SQLite records</em></article>
+</div>
+<section class="panel"><h2>Vehicle pattern classifications</h2><p class="muted">Features include vehicle age, recent observation counts, accident records, pending reviews and document expiry flags.</p><div class="scroll"><table><thead><tr><th>REGISTRATION</th><th>VEHICLE</th><th>MODEL CLASSIFICATION</th><th>MODEL CONFIDENCE</th></tr></thead><tbody>
+{% for p in predictions %}<tr><td>{{p.plate}}</td><td>{{p.make}} {{p.model}}</td><td><span class="pill {% if p.pattern == 'Priority Review' %}Expired{% elif p.pattern == 'Monitor' %}Expiring soon{% else %}Valid{% endif %}">{{p.pattern}}</span></td><td>{{"%.0f"|format(p.confidence*100)}}%</td></tr>{% else %}<tr><td colspan="4">No vehicle records available.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section class="grid two"><div class="panel"><h2>Training label distribution</h2><div class="scroll"><table><thead><tr><th>LABEL</th><th>ROWS</th></tr></thead><tbody>{% for name,count in result.class_counts.items() %}<tr><td>{{name}}</td><td>{{count}}</td></tr>{% endfor %}</tbody></table></div></div><div class="panel"><h2>Feature importance</h2><p class="muted">Relative contribution to this fitted model, not causation.</p>{% for item in result.importances %}<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;gap:12px"><span>{{item.feature}}</span><b>{{"%.1f"|format(item.importance*100)}}%</b></div><div style="height:6px;background:var(--line,#2a2a2a);border-radius:8px;overflow:hidden;margin-top:5px"><div style="height:100%;width:{{item.importance*100}}%;background:#ff6b00;border-radius:8px"></div></div></div>{% endfor %}</div></section>
+<section class="panel"><h2>How this model works</h2><ol><li>Read labelled examples from <code>data/traffic_patterns.csv</code>.</li><li>Split the data into training and holdout test sets.</li><li>Train a new Random Forest model on the training rows.</li><li>Report holdout accuracy and classify current vehicle records.</li><li>Save the fitted model to <code>models/traffic_pattern_rf.joblib</code>.</li></ol><p class="muted">The model retrains when this page is opened. Accuracy on synthetic sample data does not establish real-world performance.</p></section>
+{% endif %}
+{% endblock %}
